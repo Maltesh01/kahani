@@ -351,6 +351,19 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AccountSummary login(LoginRequest request, HttpSession session, HttpServletRequest servletRequest) {
+        return login(request, session, servletRequest, false);
+    }
+
+    @Transactional(readOnly = true)
+    public AccountSummary adminLogin(LoginRequest request, HttpSession session, HttpServletRequest servletRequest) {
+        return login(request, session, servletRequest, true);
+    }
+
+    private AccountSummary login(
+            LoginRequest request,
+            HttpSession session,
+            HttpServletRequest servletRequest,
+            boolean adminLogin) {
         var identifier = request.identifier() == null ? "" : request.identifier().trim();
         var password = request.password() == null ? "" : request.password();
         var profile = identifier.contains("@")
@@ -359,8 +372,15 @@ public class AuthService {
         var candidate = profile.orElse(null);
         if (candidate == null
                 || candidate.getPasswordHash() == null
+                || candidate.isAdmin() != adminLogin
                 || !passwordEncoder.matches(password, candidate.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email/Kahani ID or password is incorrect");
+            var message = adminLogin
+                    ? "Admin email or password is incorrect"
+                    : "Email/Kahani ID or password is incorrect";
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, message);
+        }
+        if (candidate.isSuspended()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This account is suspended. Contact Kahani support.");
         }
         servletRequest.changeSessionId();
         session.setAttribute(SESSION_PROFILE_ID, candidate.getId());
@@ -385,6 +405,12 @@ public class AuthService {
     public Long currentProfileId(HttpSession session) {
         var profileId = session.getAttribute(SESSION_PROFILE_ID);
         if (profileId instanceof Long id) {
+            var profile = profileRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Account no longer exists"));
+            if (profile.isSuspended()) {
+                session.invalidate();
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This account is suspended. Contact Kahani support.");
+            }
             return id;
         }
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to continue");

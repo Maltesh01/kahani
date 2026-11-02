@@ -2,6 +2,7 @@ package in.storyfirst.platform.billing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -74,16 +75,27 @@ class CreditPurchaseServiceTest {
     @Test
     void approvingPurchaseAddsCreditsAndRecordsTransaction() {
         var purchase = mock(CreditPurchase.class);
-        var profile = mockProfile("MAN");
+        var profile = new Profile(
+                "Test Member", "Designer", "Pune", "A profile story.", "Books", "MAN",
+                null, null, "+919876543210", "test_member", "APPROVED",
+                true, false, 2, false);
+        profile.setCredentials("KANI-TEST12345", "test@example.com", "encoded-password");
         when(purchaseRepository.findById(41L)).thenReturn(Optional.of(purchase));
         when(purchase.getStatus()).thenReturn("PENDING");
         when(purchase.getProfileId()).thenReturn(12L);
         when(purchase.getCredits()).thenReturn(5);
+        when(purchase.getId()).thenReturn(41L);
         when(profileRepository.findById(12L)).thenReturn(Optional.of(profile));
 
-        service.review(41L, true);
+        var result = service.review(41L, true);
 
-        verify(profile).addCredits(5);
+        assertEquals(41L, result.purchaseId());
+        assertEquals("KANI-TEST12345", result.accountId());
+        assertEquals(5, result.creditsAdded());
+        assertEquals(7, result.creditBalance());
+        assertTrue(result.subscriptionActive());
+        assertEquals(7, profile.getCreditsBalance());
+        assertTrue(profile.isSubscriptionActive());
         verify(transactionRepository).save(any(CreditTransaction.class));
         verify(purchase).review(true);
     }

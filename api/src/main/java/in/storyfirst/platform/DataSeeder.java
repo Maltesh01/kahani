@@ -94,7 +94,7 @@ public class DataSeeder {
         profile.setCredentials(
                 "KAHANI-DEMO-" + accountSuffix,
                 emailPrefix + "@kahani.demo",
-                passwordEncoder.encode("KahaniDemo123!"));
+                passwordEncoder.encode(admin ? "KahaniAdminDemo123!" : "KahaniDemo123!"));
         return repository.save(profile);
     }
 }

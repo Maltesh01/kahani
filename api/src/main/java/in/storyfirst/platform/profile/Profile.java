@@ -65,6 +65,7 @@ public class Profile {
     private String verificationStatus;
     private boolean instagramVerified;
     private boolean subscriptionActive;
+    private boolean suspended;
     private int creditsBalance;
     private boolean admin;
 
@@ -235,6 +236,14 @@ public class Profile {
 
     public boolean isSubscriptionActive() {
         return subscriptionActive;
+    }
+
+    public boolean isSuspended() {
+        return suspended;
+    }
+
+    public void setSuspended(boolean suspended) {
+        this.suspended = suspended;
     }
 
     public int getCreditsBalance() {

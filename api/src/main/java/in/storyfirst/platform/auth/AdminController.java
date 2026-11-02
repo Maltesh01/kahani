@@ -2,6 +2,7 @@ package in.storyfirst.platform.auth;
 
 import in.storyfirst.platform.billing.CreditPurchaseCase;
 import in.storyfirst.platform.billing.CreditPurchaseDecision;
+import in.storyfirst.platform.billing.CreditPurchaseReviewResult;
 import in.storyfirst.platform.billing.CreditPurchaseService;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
@@ -49,12 +50,12 @@ public class AdminController {
     }
 
     @PatchMapping("/admin/payments/{purchaseId}")
-    public void reviewPayment(
+    public CreditPurchaseReviewResult reviewPayment(
             @PathVariable Long purchaseId,
             @RequestBody CreditPurchaseDecision decision,
             HttpSession session) {
         requireAdmin(session);
-        creditPurchaseService.review(purchaseId, decision.approved());
+        return creditPurchaseService.review(purchaseId, decision.approved());
     }
 
     @GetMapping("/admin/profiles/{profileId}/voice")

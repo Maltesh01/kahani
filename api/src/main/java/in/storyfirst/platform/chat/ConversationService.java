@@ -98,7 +98,8 @@ public class ConversationService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
         var recipient = profileRepository.findById(connection.getRecipientId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
-        if (!"APPROVED".equals(requester.getVerificationStatus())
+        if (requester.isSuspended() || recipient.isSuspended()
+                || !"APPROVED".equals(requester.getVerificationStatus())
                 || !"APPROVED".equals(recipient.getVerificationStatus())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin verification is required to use chat");
         }

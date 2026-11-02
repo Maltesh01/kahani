@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
     List<Profile> findByIdNot(Long id);
+    List<Profile> findByAdminFalseOrderByIdDesc();
 
     java.util.Optional<Profile> findByPhoneNumber(String phoneNumber);
 

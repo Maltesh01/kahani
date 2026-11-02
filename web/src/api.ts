@@ -1,4 +1,4 @@
-import type { Account, ChatMessage, Connection, CreditPurchase, InstagramShare, Profile, VerificationCase } from './types'
+import type { Account, AdminAnalytics, AdminUser, ChatMessage, Connection, CreditPurchase, CreditPurchaseReviewResult, InstagramShare, Profile, SafetyReport, SafetyReportCategory, VerificationCase } from './types'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
@@ -92,6 +92,11 @@ export const signIn = (identifier: string, password: string) =>
     method: 'POST',
     body: JSON.stringify({ identifier, password }),
   })
+export const adminSignIn = (email: string, password: string) =>
+  request<Account>('/api/admin/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ identifier: email, password }),
+  })
 export const verifyPhoneCode = (phoneNumber: string, code: string) =>
   request<Account>('/api/auth/verify', {
     method: 'POST',
@@ -115,8 +120,27 @@ export const hideInstagram = (requestId: number) =>
   request<InstagramShare[]>(`/api/connections/${requestId}/instagram-share`, { method: 'DELETE' })
 export const getVerificationQueue = () => request<VerificationCase[]>('/api/admin/verification-queue')
 export const getCreditPurchaseQueue = () => request<CreditPurchase[]>('/api/admin/payment-queue')
+export const getAdminPayments = () => request<CreditPurchase[]>('/api/admin/payments')
+export const getAdminUsers = () => request<AdminUser[]>('/api/admin/users')
+export const setAdminUserSuspended = (profileId: number, suspended: boolean) =>
+  request<AdminUser>(`/api/admin/users/${profileId}/suspension`, {
+    method: 'PATCH',
+    body: JSON.stringify({ suspended }),
+  })
+export const getAdminAnalytics = () => request<AdminAnalytics>('/api/admin/analytics')
+export const getSafetyReports = () => request<SafetyReport[]>('/api/admin/reports')
+export const reviewSafetyReport = (reportId: number, status: 'RESOLVED' | 'DISMISSED') =>
+  request<SafetyReport>(`/api/admin/reports/${reportId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+export const submitSafetyReport = (profileId: number, category: SafetyReportCategory, details: string) =>
+  request<SafetyReport>('/api/safety/reports', {
+    method: 'POST',
+    body: JSON.stringify({ profileId, category, details }),
+  })
 export const reviewCreditPurchase = (purchaseId: number, approved: boolean) =>
-  request<void>(`/api/admin/payments/${purchaseId}`, {
+  request<CreditPurchaseReviewResult>(`/api/admin/payments/${purchaseId}`, {
     method: 'PATCH',
     body: JSON.stringify({ approved }),
   })

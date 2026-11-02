@@ -28,6 +28,14 @@ button { cursor: pointer; }
 button:disabled { cursor: default; }
 
 .app-shell { min-height: 100vh; }
+.admin-portal-shell { min-height: 100vh; background: var(--canvas); }
+.admin-portal-header { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px max(24px, calc((100% - 1120px) / 2)); border-bottom: 1px solid var(--line); background: var(--paper); }
+.admin-portal-header .brand { padding: 0; }
+.admin-portal-header .brand-wordmark small { color: var(--copper); }
+.admin-portal-user { display: flex; align-items: center; gap: 18px; color: var(--muted); font-size: 12px; }
+.admin-logout-button { border: 1px solid var(--line); border-radius: 7px; padding: 8px 12px; color: var(--plum); background: white; font-size: 11px; font-weight: 600; }
+.admin-logout-button:hover { border-color: var(--copper); color: var(--copper); }
+.admin-portal-main { max-width: 1120px; margin: 0 auto; padding: 48px 28px 60px; }
 .sidebar {
   position: fixed; inset: 0 auto 0 0; z-index: 3; width: 248px; display: flex; flex-direction: column;
   padding: 31px 18px 17px; background: #fff; border-right: 1px solid #eeece7;
@@ -435,20 +443,62 @@ h1, h2, h3 { color: #34212d; }
   .shared-caption { max-width: 130px; }
 }
 @media (max-width: 800px) {
-  .sidebar { width: 67px; align-items: center; padding: 21px 8px 12px; }
-  .brand { padding: 0; }
-  .sidebar > .brand > .brand-wordmark, .sidebar-label, .nav-item > span, .sidebar-note, .account-copy, .account-chevron { display: none; }
-  .primary-nav { width: 100%; margin-top: 55px; }
-  .nav-item { justify-content: center; padding: 0; }
-  .nav-count { position: absolute; margin: -22px 0 0 24px; min-width: 16px; height: 16px; font-size: 8px; }
-  .account-card { justify-content: center; padding: 15px 0 0; }
-  .main-content { margin-left: 67px; }
+  .sidebar {
+    inset: auto 0 0;
+    width: 100%;
+    height: calc(72px + env(safe-area-inset-bottom));
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid #704b60;
+    border-right: 0;
+  }
+  .sidebar > .brand, .sidebar-label, .sidebar-note, .account-card { display: none; }
+  .primary-nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    align-items: center;
+    width: 100%;
+    gap: 3px;
+    margin: 0;
+  }
+  .nav-item {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    height: 54px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 2px;
+    font-size: 9px;
+    text-align: center;
+  }
+  .nav-item > span:not(.nav-count) { display: block; white-space: normal; line-height: 1.1; }
+  .nav-item.active { box-shadow: inset 0 2px var(--copper); }
+  .nav-count {
+    position: absolute;
+    top: 3px;
+    left: calc(50% + 5px);
+    min-width: 16px;
+    height: 16px;
+    margin: 0;
+    padding: 0 4px;
+    font-size: 8px;
+  }
+  .main-content { margin-left: 0; padding-bottom: calc(82px + env(safe-area-inset-bottom)); }
   .welcome-art { opacity: .65; transform: scale(.7); }
 }
 @media (max-width: 600px) {
-  .sidebar { width: 56px; padding-right: 5px; padding-left: 5px; }
-  .brand-mark { width: 32px; height: 32px; }
-  .main-content { margin-left: 56px; }
+  .sidebar { padding-right: 5px; padding-left: 5px; }
+  .admin-portal-header { min-height: 64px; padding: 10px 16px; }
+  .admin-portal-header .brand { gap: 7px; font-size: 19px; }
+  .admin-portal-header .brand-mark { width: 35px; height: 35px; }
+  .admin-portal-user { gap: 8px; font-size: 10px; }
+  .admin-logout-button { padding: 7px 9px; }
+  .admin-portal-main { padding: 32px 16px 42px; }
+  .credit-balance-panel { align-items: flex-start; }
+  .credit-balance-panel .share-button { flex: 0 0 auto; padding: 8px; font-size: 10px; }
   .topbar { height: 57px; padding: 0 18px; }
   .online-indicator { display: none; }
   .page-wrap { padding: 34px 18px 28px; }
@@ -492,6 +542,11 @@ h1, h2, h3 { color: #34212d; }
 .credit-purchase-panel .section-heading { margin: 0 0 17px; }
 .credit-purchase-panel .section-heading h2 { font-size: 18px; }
 .credit-purchase-panel .section-heading p { margin-top: 5px; }
+.credit-balance-panel { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 16px; border: 1px solid #e8d7cb; border-radius: 10px; padding: 14px 16px; background: #fff8f2; }
+.credit-balance-panel > div { display: grid; gap: 4px; }
+.credit-balance-panel span { color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: 1px; }
+.credit-balance-panel strong { color: var(--plum); font-family: Manrope, sans-serif; font-size: 21px; }
+.credit-balance-panel small { color: var(--muted); font-size: 10px; }
 .credit-package-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .credit-package { display: grid; gap: 5px; min-height: 100px; border: 1px solid var(--line); border-radius: 10px; padding: 14px; color: var(--ink); background: white; text-align: left; }
 .credit-package:hover, .credit-package.selected { border-color: var(--copper); background: #fff9f5; box-shadow: 0 0 0 1px var(--copper-light); }
@@ -503,6 +558,47 @@ h1, h2, h3 { color: #34212d; }
 .credit-payment-form input { width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; color: var(--ink); background: white; font-size: 13px; }
 .credit-payment-form input:focus { outline: 2px solid var(--copper-light); border-color: var(--copper); }
 .credit-payment-form .payment-instructions, .payment-total { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.admin-tabs { overflow-x: auto; }
+.admin-tabs button { flex: 0 0 auto; white-space: nowrap; }
+.admin-tabs button svg { flex: 0 0 auto; }
+.admin-member-list, .admin-report-list { display: grid; gap: 10px; }
+.admin-member-card, .admin-report-card, .admin-metric-card { border: 1px solid #eadbd4; border-radius: 10px; padding: 16px; background: #fffdfa; }
+.admin-member-heading { display: flex; align-items: flex-start; gap: 12px; }
+.admin-member-heading > div { display: grid; gap: 5px; margin-right: auto; }
+.admin-member-heading strong { color: var(--ink); font-family: Manrope, sans-serif; font-size: 13px; }
+.admin-member-heading span:not(.admin-status) { color: var(--muted); font-size: 10px; }
+.admin-member-facts { display: flex; flex-wrap: wrap; gap: 7px 16px; margin: 13px 0; color: var(--muted); font-size: 10px; }
+.admin-status { flex: 0 0 auto; border-radius: 20px; padding: 5px 9px; color: #806b51; background: #f8f0e2; font-size: 9px; font-weight: 700; text-transform: capitalize; }
+.admin-status.approved, .admin-status.resolved { color: #4b7458; background: #eaf3eb; }
+.admin-status.pending { color: #8a653d; background: #fbf0df; }
+.admin-status.rejected, .admin-status.dismissed, .admin-status.suspended { color: #955d55; background: #faece8; }
+.admin-restore-button { height: 31px; border: 1px solid #d6e5d7; border-radius: 5px; padding: 0 11px; color: #4e7656; background: #f5faf4; font-size: 10px; }
+.admin-analytics-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.admin-metric-card { display: grid; gap: 12px; min-height: 94px; align-content: space-between; }
+.admin-metric-card span { color: var(--muted); font-size: 10px; }
+.admin-metric-card strong { color: var(--plum); font-family: Manrope, sans-serif; font-size: 22px; }
+.admin-report-card .admin-member-heading { align-items: center; }
+.admin-report-details { margin: 14px 0; color: var(--ink); font-size: 12px; line-height: 1.65; white-space: pre-wrap; }
+.admin-report-parties { display: grid; gap: 5px; color: var(--muted); font-size: 10px; }
+.admin-report-parties strong { color: var(--ink); }
+.report-member-button { display: flex; align-items: center; gap: 6px; margin: 14px 0 0 auto; border: 0; padding: 5px 0; color: #93635c; background: transparent; font-size: 10px; }
+.safety-report-form { display: grid; gap: 10px; margin-top: 12px; border: 1px solid #eadbd4; border-radius: 9px; padding: 13px; background: #fffaf7; }
+.safety-report-form > strong { color: var(--plum); font-size: 12px; }
+.safety-report-form label { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 600; }
+.safety-report-form select, .safety-report-form textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 8px; color: var(--ink); background: white; font: inherit; font-size: 11px; }
+.safety-report-form textarea { resize: vertical; }
+.safety-report-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.safety-report-confirmation { margin: 14px 0 0; color: #557a5f; font-size: 10px; line-height: 1.5; }
+@media (max-width: 700px) {
+  .admin-analytics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-member-heading { flex-wrap: wrap; }
+  .admin-member-heading .admin-status { margin-left: auto; }
+}
+@media (max-width: 420px) {
+  .admin-analytics-grid { grid-template-columns: 1fr 1fr; gap: 7px; }
+  .admin-metric-card { min-height: 82px; padding: 11px; }
+  .admin-metric-card strong { font-size: 18px; }
+}
 .payment-total { color: var(--ink); }
 .credit-payment-form .auth-submit { width: fit-content; min-width: 230px; }
 .purchase-history { display: grid; gap: 9px; max-width: 600px; margin-top: 22px; border-top: 1px solid var(--line); padding-top: 16px; }

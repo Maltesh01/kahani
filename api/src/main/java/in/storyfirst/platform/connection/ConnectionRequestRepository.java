@@ -8,4 +8,6 @@ public interface ConnectionRequestRepository extends JpaRepository<ConnectionReq
     Optional<ConnectionRequest> findByRequesterIdAndRecipientId(Long requesterId, Long recipientId);
 
     List<ConnectionRequest> findByRequesterIdOrRecipientIdOrderByCreatedAtDesc(Long requesterId, Long recipientId);
+
+    long countByStatus(String status);
 }

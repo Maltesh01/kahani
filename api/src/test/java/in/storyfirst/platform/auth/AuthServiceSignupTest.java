@@ -174,6 +174,74 @@ class AuthServiceSignupTest {
     }
 
     @Test
+    void preventsAdminAccountsFromUsingMemberLogin() {
+        var profile = adminProfile();
+        when(profileRepository.findByEmailIgnoreCase("admin@example.com")).thenReturn(Optional.of(profile));
+        when(passwordEncoder.matches("SafePassword123", "encoded-password")).thenReturn(true);
+
+        var error = assertThrows(
+                ResponseStatusException.class,
+                () -> authService.login(
+                        new LoginRequest("admin@example.com", "SafePassword123"),
+                        mock(HttpSession.class),
+                        mock(HttpServletRequest.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, error.getStatusCode());
+    }
+
+    @Test
+    void allowsAdminAccountsOnlyThroughAdminLogin() {
+        var profile = adminProfile();
+        when(profileRepository.findByEmailIgnoreCase("admin@example.com")).thenReturn(Optional.of(profile));
+        when(passwordEncoder.matches("SafePassword123", "encoded-password")).thenReturn(true);
+        var session = mock(HttpSession.class);
+        var servletRequest = mock(HttpServletRequest.class);
+
+        var account = authService.adminLogin(
+                new LoginRequest("admin@example.com", "SafePassword123"),
+                session,
+                servletRequest);
+
+        assertTrue(account.admin());
+        verify(session).setAttribute("profileId", profile.getId());
+        verify(servletRequest).changeSessionId();
+    }
+
+    @Test
+    void preventsMemberAccountsFromUsingAdminLogin() {
+        var profile = new Profile(
+                "A Person", "Designer", "Pune", longStory(), "Books", "WOMAN",
+                null, null, "+919876543210", "story_person", "APPROVED",
+                true, false, 0, false);
+        profile.setCredentials("KANI-ABCDEF1234", "person@example.com", "encoded-password");
+        when(profileRepository.findByEmailIgnoreCase("person@example.com")).thenReturn(Optional.of(profile));
+        when(passwordEncoder.matches("SafePassword123", "encoded-password")).thenReturn(true);
+
+        var error = assertThrows(
+                ResponseStatusException.class,
+                () -> authService.adminLogin(
+                        new LoginRequest("person@example.com", "SafePassword123"),
+                        mock(HttpSession.class),
+                        mock(HttpServletRequest.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, error.getStatusCode());
+    }
+
+    @Test
+    void suspendedMemberCannotContinueAnExistingSession() {
+        var session = mock(HttpSession.class);
+        var member = mock(Profile.class);
+        when(session.getAttribute("profileId")).thenReturn(42L);
+        when(profileRepository.findById(42L)).thenReturn(Optional.of(member));
+        when(member.isSuspended()).thenReturn(true);
+
+        var error = assertThrows(ResponseStatusException.class, () -> authService.currentProfileId(session));
+
+        assertEquals(HttpStatus.FORBIDDEN, error.getStatusCode());
+        verify(session).invalidate();
+    }
+
+    @Test
     void revealsAccountIdOnlyAfterRecoveryEmailCodeVerification() {
         var profile = mock(Profile.class);
         when(profile.getAccountId()).thenReturn("KANI-ABCDEF1234");
@@ -184,6 +252,15 @@ class AuthServiceSignupTest {
                 new VerifyEmailRequest("person@example.com", "123456"));
 
         assertEquals("KANI-ABCDEF1234", response.accountId());
+    }
+
+    private Profile adminProfile() {
+        var profile = new Profile(
+                "Kahani Admin", "Community verification team", "Private", longStory(), "Admin",
+                "MAN", null, null, "+15550000009", "kahani.admin.demo", "APPROVED",
+                true, false, 0, true);
+        profile.setCredentials("KANI-ADMIN1234", "admin@example.com", "encoded-password");
+        return profile;
     }
 
     @Test

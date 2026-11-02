@@ -117,6 +117,9 @@ public class ConnectionService {
     }
 
     private void requireEligible(Profile profile) {
+        if (profile.isSuspended()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This account is unavailable");
+        }
         if (!"APPROVED".equals(profile.getVerificationStatus())) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,

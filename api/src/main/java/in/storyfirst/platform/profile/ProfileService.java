@@ -30,6 +30,7 @@ public class ProfileService {
 
         return profileRepository.findByIdNot(profileId).stream()
                 .filter(profile -> !profile.isAdmin())
+                .filter(profile -> !profile.isSuspended())
                 .filter(profile -> "APPROVED".equals(profile.getVerificationStatus()))
                 .filter(profile -> query.isEmpty() || matches(profile, query))
                 .map(profile -> {

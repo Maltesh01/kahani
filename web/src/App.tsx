@@ -3,9 +3,12 @@ import type { ChangeEvent, FormEvent } from 'react'
 import {
   ArrowRight,
   ArrowLeft,
+  BarChart3,
   Bell,
   Check,
   Compass,
+  CreditCard,
+  Flag,
   Heart,
   Instagram,
   LogOut,
@@ -14,13 +17,17 @@ import {
   MoreHorizontal,
   Sparkles,
   Star,
+  ShieldAlert,
   Users,
+  UserRoundCog,
   Wallet,
 } from 'lucide-react'
 import {
   acceptConnection,
+  getAdminAnalytics,
+  getAdminPayments,
+  getAdminUsers,
   getConnections,
-  getCreditPurchaseQueue,
   getCurrentProfile,
   getDiscoverProfiles,
   getMyCreditPurchases,
@@ -39,16 +46,21 @@ import {
   uploadVoiceRecording,
   getVerificationQueue,
   reviewVerification,
+  reviewSafetyReport,
   reviewCreditPurchase,
+  setAdminUserSuspended,
+  getSafetyReports,
+  submitSafetyReport,
   requestCreditPurchase,
   getVoiceRecordingUrl,
   signIn,
+  adminSignIn,
   sendAccountIdRecoveryCode,
   recoverAccountId,
 } from './api'
-import type { Account, ChatMessage, Connection, CreditPurchase, InstagramShare, Profile, VerificationCase } from './types'
+import type { Account, AdminAnalytics, AdminUser, ChatMessage, Connection, CreditPurchase, InstagramShare, Profile, SafetyReport, SafetyReportCategory, VerificationCase } from './types'
 
-type View = 'discover' | 'connections' | 'messages' | 'chat' | 'more' | 'admin'
+type View = 'discover' | 'connections' | 'messages' | 'chat' | 'more'
 type MoreSection = 'menu' | 'matches' | 'favourites' | 'skipped' | 'membership'
 
 const purposeOptions = [
@@ -524,12 +536,115 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (account: Account) =
         </form>
         {import.meta.env.DEV && (
           <div className="auth-demo">
-            Demo sign-in: phone <strong>+15550000001</strong> or email <strong>alexmorgandemo@kahani.demo</strong>; password <strong>KahaniDemo123!</strong>. Admin email <strong>kahaniadmindemo@kahani.demo</strong>, same password.
+            Demo sign-in: phone <strong>+15550000001</strong> or email <strong>alexmorgandemo@kahani.demo</strong>; password <strong>KahaniDemo123!</strong>.
           </div>
         )}
         <div className="auth-footer"><Heart size={13} /> Your story comes first. Profile photos are never requested or shown.</div>
       </section>
     </main>
+  )
+}
+
+function AdminLoginScreen({ onAuthenticated }: { onAuthenticated: (account: Account) => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      const account = await adminSignIn(email, password)
+      if (!account.admin) {
+        setError('This account is not authorized for admin access.')
+        return
+      }
+      onAuthenticated(account)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not sign in to the admin portal.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <main className="auth-page admin-auth-page">
+      <section className="auth-card">
+        <a className="brand auth-brand" href="/" aria-label="Kahani home">
+          <img className="brand-mark" src="/kahani-mark.svg" alt="" />
+          <span className="brand-wordmark">Kahani<span className="brand-period">.</span><small>PRIVATE ADMIN PORTAL</small></span>
+        </a>
+        <div className="eyebrow"><span className="eyebrow-line" /> AUTHORIZED TEAM ONLY</div>
+        <h1>Admin sign-in<span className="title-dot">.</span></h1>
+        <p className="page-description">This private portal is for authorized Kahani team members.</p>
+        <form className="auth-form" onSubmit={(event) => void handleSubmit(event)}>
+          <label>Admin email<input type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+          <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+          {error && <div className="error-banner" role="alert">{error}</div>}
+          <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Signing in...' : 'Sign in to admin'}</button>
+        </form>
+        <div className="auth-footer"><Heart size={13} /> Admin credentials are separate from member sign-in.</div>
+      </section>
+    </main>
+  )
+}
+
+function AdminPortal() {
+  const [account, setAccount] = useState<Account | null>(null)
+  const [checking, setChecking] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    getCurrentProfile()
+      .then((currentAccount) => {
+        if (active && currentAccount.admin) setAccount(currentAccount)
+      })
+      .catch((cause: unknown) => {
+        if (active && !(cause instanceof Error && cause.message.includes('401'))) {
+          setError(cause instanceof Error ? cause.message : 'Could not verify admin access.')
+        }
+      })
+      .finally(() => {
+        if (active) setChecking(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  async function handleLogout() {
+    await logout()
+    setAccount(null)
+  }
+
+  if (checking) return <div className="auth-loading"><div className="loader" /> Checking admin access...</div>
+  if (!account) {
+    return <AdminLoginScreen onAuthenticated={(authenticated) => {
+      setAccount(authenticated)
+      setError('')
+    }} />
+  }
+
+  return (
+    <div className="admin-portal-shell">
+      <header className="admin-portal-header">
+        <a className="brand" href="/" aria-label="Kahani home">
+          <img className="brand-mark" src="/kahani-mark.svg" alt="" />
+          <span className="brand-wordmark">Kahani<span className="brand-period">.</span><small>PRIVATE ADMIN PORTAL</small></span>
+        </a>
+        <div className="admin-portal-user">
+          <span>{account.profile.name}</span>
+          <button className="admin-logout-button" onClick={() => void handleLogout()}>Log out</button>
+        </div>
+      </header>
+      <main className="admin-portal-main">
+        {error && <div className="error-banner" role="alert">{error}</div>}
+        <AdminPanel />
+      </main>
+    </div>
   )
 }
 
@@ -612,13 +727,20 @@ function VoiceUpload({ submitted, required = false, onUploaded }: {
   )
 }
 
-function CreditPurchasePanel({ onCreditsChanged }: { onCreditsChanged: () => void }) {
+function CreditPurchasePanel({
+  creditsBalance,
+  onCreditsChanged,
+}: {
+  creditsBalance: number
+  onCreditsChanged: () => Promise<Account>
+}) {
   const [packageCode, setPackageCode] = useState('FIVE_CREDITS')
   const [customCredits, setCustomCredits] = useState(1)
   const [paymentReference, setPaymentReference] = useState('')
   const [purchases, setPurchases] = useState<CreditPurchase[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [refreshingBalance, setRefreshingBalance] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const amount = packageCode === 'FIVE_CREDITS'
@@ -654,7 +776,6 @@ function CreditPurchasePanel({ onCreditsChanged }: { onCreditsChanged: () => voi
       setPaymentReference('')
       setMessage('Payment reference submitted. Credits will be added after an admin confirms the payment.')
       refresh()
-      onCreditsChanged()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not submit payment reference.')
     } finally {
@@ -662,10 +783,30 @@ function CreditPurchasePanel({ onCreditsChanged }: { onCreditsChanged: () => voi
     }
   }
 
+  async function refreshBalance() {
+    setRefreshingBalance(true)
+    setError('')
+    setMessage('')
+    try {
+      const currentAccount = await onCreditsChanged()
+      setMessage(`Balance updated: ${currentAccount.creditsBalance} credits available.`)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not refresh your credit balance.')
+    } finally {
+      setRefreshingBalance(false)
+    }
+  }
+
   return (
     <section className="credit-purchase-panel">
       <div className="section-heading">
         <div><h2>Get connection credits</h2><p>Men use 1 credit to request a connection with a woman. Access activates when an admin confirms payment.</p></div>
+      </div>
+      <div className="credit-balance-panel">
+        <div><span>AVAILABLE BALANCE</span><strong>{creditsBalance} credits</strong><small>Approved plan credits appear here automatically.</small></div>
+        <button type="button" className="share-button" onClick={() => void refreshBalance()} disabled={refreshingBalance}>
+          {refreshingBalance ? 'Refreshing...' : 'Refresh balance'}
+        </button>
       </div>
       <div className="credit-package-grid">
         <button type="button" className={packageCode === 'FIVE_CREDITS' ? 'credit-package selected' : 'credit-package'} onClick={() => setPackageCode('FIVE_CREDITS')}>
@@ -707,22 +848,31 @@ function CreditPurchasePanel({ onCreditsChanged }: { onCreditsChanged: () => voi
 }
 
 function AdminPanel() {
-  const [tab, setTab] = useState<'stories' | 'payments'>('stories')
+  const [tab, setTab] = useState<'users' | 'profiles' | 'payments' | 'analytics' | 'safety'>('users')
+  const [users, setUsers] = useState<AdminUser[]>([])
   const [queue, setQueue] = useState<VerificationCase[]>([])
   const [payments, setPayments] = useState<CreditPurchase[]>([])
+  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null)
+  const [reports, setReports] = useState<SafetyReport[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
   const [busyId, setBusyId] = useState<number | null>(null)
 
   const refresh = () => {
     setLoading(true)
     setError('')
-    const loadQueue = tab === 'stories' ? getVerificationQueue() : getCreditPurchaseQueue()
-    loadQueue
-      .then((items) => tab === 'stories'
-        ? setQueue(items as VerificationCase[])
-        : setPayments(items as CreditPurchase[]))
-      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load verification queue.'))
+    const loadSection = tab === 'users'
+      ? getAdminUsers().then(setUsers)
+      : tab === 'profiles'
+        ? getVerificationQueue().then(setQueue)
+        : tab === 'payments'
+          ? getAdminPayments().then(setPayments)
+          : tab === 'analytics'
+            ? getAdminAnalytics().then(setAnalytics)
+            : getSafetyReports().then(setReports)
+    loadSection
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load this admin section.'))
       .finally(() => setLoading(false))
   }
 
@@ -746,9 +896,15 @@ function AdminPanel() {
   async function decidePayment(purchaseId: number, approved: boolean) {
     setBusyId(purchaseId)
     setError('')
+    setMessage('')
     try {
-      await reviewCreditPurchase(purchaseId, approved)
-      setPayments((current) => current.filter((entry) => entry.id !== purchaseId))
+      const result = await reviewCreditPurchase(purchaseId, approved)
+      setPayments((current) => current.map((entry) => entry.id === purchaseId
+        ? { ...entry, status: approved ? 'APPROVED' : 'REJECTED' }
+        : entry))
+      setMessage(approved
+        ? `Added ${result.creditsAdded} credits to ${result.accountId}. New balance: ${result.creditBalance} credits.`
+        : `Payment request for ${result.accountId} was rejected. No credits were added.`)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not review this payment.')
     } finally {
@@ -756,19 +912,82 @@ function AdminPanel() {
     }
   }
 
+  async function setSuspended(profileId: number, suspended: boolean) {
+    setBusyId(profileId)
+    setError('')
+    setMessage('')
+    try {
+      const updated = await setAdminUserSuspended(profileId, suspended)
+      setUsers((current) => current.map((user) => user.profileId === profileId ? updated : user))
+      setMessage(suspended ? 'Member account suspended.' : 'Member account restored.')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not update this account.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function decideReport(reportId: number, status: 'RESOLVED' | 'DISMISSED') {
+    setBusyId(reportId)
+    setError('')
+    setMessage('')
+    try {
+      const updated = await reviewSafetyReport(reportId, status)
+      setReports((current) => current.map((report) => report.id === reportId ? updated : report))
+      setMessage(status === 'RESOLVED' ? 'Report marked as resolved.' : 'Report dismissed.')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not update this report.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const pendingPayments = payments.filter((payment) => payment.status === 'PENDING').length
+  const pendingReports = reports.filter((report) => report.status === 'PENDING').length
+
   return (
     <>
       <div className="connections-intro">
         <div className="eyebrow"><span className="eyebrow-line" /> KAHANI COMMUNITY CARE</div>
         <h1>Admin dashboard<span className="title-dot">.</span></h1>
-        <p className="page-description">Review member stories and manually match payment references against your payment provider before granting credits.</p>
+        <p className="page-description">Manage members, review stories and payments, understand engagement, and respond to safety reports.</p>
       </div>
-      <div className="admin-tabs" role="tablist" aria-label="Admin queues">
-        <button type="button" className={tab === 'stories' ? 'active' : ''} onClick={() => setTab('stories')}>Story reviews <span>{queue.length}</span></button>
-        <button type="button" className={tab === 'payments' ? 'active' : ''} onClick={() => setTab('payments')}>Payment reviews <span>{payments.length}</span></button>
+      <div className="admin-tabs" role="tablist" aria-label="Admin sections">
+        <button type="button" className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}><UserRoundCog size={15} /> Members</button>
+        <button type="button" className={tab === 'profiles' ? 'active' : ''} onClick={() => setTab('profiles')}><Check size={15} /> Profile review <span>{queue.length}</span></button>
+        <button type="button" className={tab === 'payments' ? 'active' : ''} onClick={() => setTab('payments')}><CreditCard size={15} /> Payments <span>{pendingPayments}</span></button>
+        <button type="button" className={tab === 'analytics' ? 'active' : ''} onClick={() => setTab('analytics')}><BarChart3 size={15} /> Analytics</button>
+        <button type="button" className={tab === 'safety' ? 'active' : ''} onClick={() => setTab('safety')}><ShieldAlert size={15} /> Safety <span>{pendingReports}</span></button>
       </div>
       {error && <div className="error-banner" role="alert">{error}</div>}
-      {loading ? <div className="empty-state"><div className="loader" /> Loading {tab === 'stories' ? 'story' : 'payment'} reviews...</div> : tab === 'stories' ? queue.length === 0 ? (
+      {message && <div className="notice-banner" role="status">{message}</div>}
+      {loading ? <div className="empty-state"><div className="loader" /> Loading {tab === 'profiles' ? 'profile reviews' : tab}...</div> : tab === 'users' ? users.length === 0 ? (
+        <div className="empty-state"><div className="empty-icon"><Users size={20} /></div><strong>No members found</strong><span>Member accounts will appear here.</span></div>
+      ) : (
+        <div className="admin-member-list">
+          {users.map((user) => (
+            <article className="admin-member-card" key={user.profileId}>
+              <div className="admin-member-heading">
+                <div><strong>{user.name}</strong><span>{user.accountId} · {user.gender.toLowerCase()} · {user.city}</span></div>
+                <span className={`admin-status ${user.suspended ? 'suspended' : user.verificationStatus.toLowerCase()}`}>{user.suspended ? 'Suspended' : user.verificationStatus.replaceAll('_', ' ').toLowerCase()}</span>
+              </div>
+              <div className="admin-member-facts">
+                <span>{user.email}</span><span>{user.phoneNumber}</span>
+                <span>{user.subscriptionActive ? 'Membership active' : 'No active membership'}</span>
+                <span>{user.creditsBalance} credits</span>
+              </div>
+              <button
+                type="button"
+                className={user.suspended ? 'admin-restore-button' : 'reject-button'}
+                onClick={() => void setSuspended(user.profileId, !user.suspended)}
+                disabled={busyId === user.profileId}
+              >
+                {busyId === user.profileId ? 'Updating...' : user.suspended ? 'Restore account' : 'Suspend account'}
+              </button>
+            </article>
+          ))}
+        </div>
+      ) : tab === 'profiles' ? queue.length === 0 ? (
         <div className="empty-state"><div className="empty-icon"><Check size={20} /></div><strong>All caught up</strong><span>There are no accounts waiting for story review.</span></div>
       ) : (
         <div className="review-queue">
@@ -781,34 +1000,136 @@ function AdminPanel() {
             />
           ))}
         </div>
-      ) : payments.length === 0 ? (
-        <div className="empty-state"><div className="empty-icon"><Check size={20} /></div><strong>No payment requests</strong><span>New UPI references will appear here for manual verification.</span></div>
+      ) : tab === 'payments' ? payments.length === 0 ? (
+        <div className="empty-state"><div className="empty-icon"><Check size={20} /></div><strong>No payment activity</strong><span>Submitted payment references and their review status will appear here.</span></div>
       ) : (
         <div className="review-queue">
           {payments.map((payment) => (
             <article className="verification-card payment-review-card" key={payment.id}>
               <div className="verification-card-top">
                 <div><strong>{payment.name}</strong><span>{payment.accountId}</span></div>
-                <span className="review-status-dot" /> Pending
+                <span className={`admin-status ${payment.status.toLowerCase()}`}>{payment.status.toLowerCase()}</span>
               </div>
               <div className="payment-review-summary">
                 <strong>₹{payment.amountRupees.toLocaleString('en-IN')}</strong>
-                <span>{payment.credits} credits · {payment.packageCode.replaceAll('_', ' ').toLowerCase()}</span>
+                <span>{payment.credits} credits · {payment.packageCode === 'CUSTOM' ? 'custom plan' : `${payment.credits}-credit plan`}</span>
               </div>
               <div className="payment-reference"><span>UPI/payment reference</span><strong>{payment.paymentReference}</strong></div>
-              <p className="admin-payment-warning">Check this reference in the payment provider before approving. Credits and one-time access activate only after approval.</p>
-              <div className="verification-actions">
-                <button className="reject-button" onClick={() => void decidePayment(payment.id, false)} disabled={busyId === payment.id}>Reject</button>
-                <button className="connect-button" onClick={() => void decidePayment(payment.id, true)} disabled={busyId === payment.id}>
-                  {busyId === payment.id ? 'Saving...' : 'Confirm payment & grant credits'}
-                </button>
+              {payment.status === 'PENDING' ? <>
+                <p className="admin-payment-warning">Check this reference in the payment provider before approving. Credits and one-time access activate only after approval.</p>
+                <div className="verification-actions">
+                  <button className="reject-button" onClick={() => void decidePayment(payment.id, false)} disabled={busyId === payment.id}>Reject</button>
+                  <button className="connect-button" onClick={() => void decidePayment(payment.id, true)} disabled={busyId === payment.id}>
+                    {busyId === payment.id ? 'Adding credits...' : `Approve payment & add ${payment.credits} credits`}
+                  </button>
+                </div>
+              </> : <p className="admin-payment-warning">Reviewed {new Date(payment.createdAt).toLocaleString()} · no further action available.</p>}
+            </article>
+          ))}
+        </div>
+      ) : tab === 'analytics' ? analytics ? (
+        <AdminAnalyticsPanel analytics={analytics} />
+      ) : (
+        <div className="empty-state"><div className="empty-icon"><BarChart3 size={20} /></div><strong>Analytics unavailable</strong><span>Refresh this section to try again.</span><button className="share-button" onClick={refresh}>Refresh</button></div>
+      ) : reports.length === 0 ? (
+        <div className="empty-state"><div className="empty-icon"><ShieldAlert size={20} /></div><strong>No safety reports</strong><span>Member-submitted reports will be tracked here.</span></div>
+      ) : (
+        <div className="admin-report-list">
+          {reports.map((report) => (
+            <article className="admin-report-card" key={report.id}>
+              <div className="admin-member-heading">
+                <div><strong>{report.category.replaceAll('_', ' ').toLowerCase()}</strong><span>Reported {new Date(report.createdAt).toLocaleString()}</span></div>
+                <span className={`admin-status ${report.status.toLowerCase()}`}>{report.status.toLowerCase()}</span>
               </div>
+              <p className="admin-report-details">{report.details}</p>
+              <div className="admin-report-parties">
+                <span>Reported member: <strong>{report.reportedName}</strong> · {report.reportedAccountId}</span>
+                <span>Submitted by: <strong>{report.reporterName}</strong> · {report.reporterAccountId}</span>
+              </div>
+              {report.status === 'PENDING' && <div className="verification-actions">
+                <button className="reject-button" onClick={() => void decideReport(report.id, 'DISMISSED')} disabled={busyId === report.id}>
+                  {busyId === report.id ? 'Updating...' : 'Dismiss report'}
+                </button>
+                <button className="connect-button" onClick={() => void decideReport(report.id, 'RESOLVED')} disabled={busyId === report.id}>
+                  Mark resolved
+                </button>
+              </div>}
             </article>
           ))}
         </div>
       )}
     </>
   )
+}
+
+function AdminAnalyticsPanel({ analytics }: { analytics: AdminAnalytics }) {
+  const metrics = [
+    { label: 'Members', value: analytics.totalUsers.toLocaleString() },
+    { label: 'Approved profiles', value: analytics.approvedProfiles.toLocaleString() },
+    { label: 'Awaiting review', value: analytics.pendingVerifications.toLocaleString() },
+    { label: 'Suspended accounts', value: analytics.suspendedUsers.toLocaleString() },
+    { label: 'Active memberships', value: analytics.activeSubscriptions.toLocaleString() },
+    { label: 'Approved payments', value: analytics.approvedPayments.toLocaleString() },
+    { label: 'Verified payment total', value: `₹${analytics.approvedPaymentRevenueRupees.toLocaleString('en-IN')}` },
+    { label: 'Accepted matches', value: analytics.acceptedConnections.toLocaleString() },
+    { label: 'Pending connection requests', value: analytics.pendingConnections.toLocaleString() },
+    { label: 'Messages sent', value: analytics.totalMessages.toLocaleString() },
+    { label: 'Payments awaiting review', value: analytics.pendingPayments.toLocaleString() },
+    { label: 'Open safety reports', value: analytics.pendingReports.toLocaleString() },
+  ]
+  return <section className="admin-analytics-grid" aria-label="Platform engagement metrics">
+    {metrics.map((metric) => <article className="admin-metric-card" key={metric.label}>
+      <span>{metric.label}</span><strong>{metric.value}</strong>
+    </article>)}
+  </section>
+}
+
+function SafetyReportForm({ profileId, profileName }: { profileId: number; profileName: string }) {
+  const [open, setOpen] = useState(false)
+  const [category, setCategory] = useState<SafetyReportCategory>('HARASSMENT')
+  const [details, setDetails] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [sent, setSent] = useState(false)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      await submitSafetyReport(profileId, category, details)
+      setSent(true)
+      setOpen(false)
+      setDetails('')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not submit this report.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (sent) return <p className="safety-report-confirmation" role="status">Thanks for letting us know. Our team will review your report.</p>
+  if (!open) return <button type="button" className="report-member-button" onClick={() => setOpen(true)}><Flag size={14} /> Report {profileName}</button>
+  return <form className="safety-report-form" onSubmit={(event) => void submit(event)}>
+    <strong>Report {profileName}</strong>
+    <label>Reason
+      <select value={category} onChange={(event) => setCategory(event.target.value as SafetyReportCategory)}>
+        <option value="HARASSMENT">Harassment or unwanted contact</option>
+        <option value="INAPPROPRIATE_CONTENT">Inappropriate content</option>
+        <option value="FAKE_PROFILE">Fake or misleading profile</option>
+        <option value="SCAM_OR_SPAM">Scam or spam</option>
+        <option value="OTHER">Something else</option>
+      </select>
+    </label>
+    <label>What happened?
+      <textarea value={details} onChange={(event) => setDetails(event.target.value)} minLength={10} maxLength={1000} required rows={3} placeholder="Share enough context for the team to review." />
+    </label>
+    {error && <div className="error-banner" role="alert">{error}</div>}
+    <div className="safety-report-actions">
+      <button type="button" className="skip-button" onClick={() => { setOpen(false); setError('') }}>Cancel</button>
+      <button type="submit" className="reject-button" disabled={busy || details.trim().length < 10}>{busy ? 'Sending...' : 'Submit report'}</button>
+    </div>
+  </form>
 }
 
 function VerificationCard({
@@ -960,6 +1281,7 @@ function ChatView({
         <span className="connected-status"><Check size={14} /> Matched</span>
       </header>
       <div className="chat-safety-note"><Heart size={14} /> You’re in control. Instagram links stay hidden unless each person chooses to reveal theirs.</div>
+      <SafetyReportForm profileId={connection.profile.id} profileName={connection.profile.name} />
       <section className="instagram-panel">
         <div><Instagram size={17} /><strong>Instagram</strong><span>Only visible after you choose to share</span></div>
         {currentInstagramHandle && (
@@ -996,7 +1318,7 @@ function ChatView({
   )
 }
 
-function App() {
+function MemberApp() {
   const [view, setView] = useState<View>('discover')
   const [account, setAccount] = useState<Account | null>(null)
   const [activeChat, setActiveChat] = useState<Connection | null>(null)
@@ -1035,6 +1357,10 @@ function App() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    if (account?.admin) window.location.replace('/admin')
+  }, [account?.admin])
 
   useEffect(() => {
     if (!account) return
@@ -1227,6 +1553,9 @@ function App() {
       setError('')
     }} />
   }
+  if (account.admin) {
+    return <div className="auth-loading"><div className="loader" /> Opening the private admin portal...</div>
+  }
 
   return (
     <div className="app-shell">
@@ -1256,12 +1585,6 @@ function App() {
             <MoreHorizontal size={18} />
             <span>More</span>
           </button>
-          {account.admin && (
-            <button className={view === 'admin' ? 'nav-item active' : 'nav-item'} onClick={() => setView('admin')}>
-              <Check size={18} />
-              <span>Admin review</span>
-            </button>
-          )}
         </nav>
 
         <div className="sidebar-note">
@@ -1284,7 +1607,7 @@ function App() {
 
       <main className="main-content">
         <header className="topbar">
-          <div className="breadcrumb"><span>KAHANI</span><span className="breadcrumb-separator">/</span><strong>{view === 'admin' ? 'ADMIN REVIEW' : view === 'discover' ? 'STORIES' : view === 'chat' || view === 'messages' ? 'MESSAGES' : view === 'more' ? 'MORE' : 'CONNECTIONS'}</strong></div>
+          <div className="breadcrumb"><span>KAHANI</span><span className="breadcrumb-separator">/</span><strong>{view === 'discover' ? 'STORIES' : view === 'chat' || view === 'messages' ? 'MESSAGES' : view === 'more' ? 'MORE' : 'CONNECTIONS'}</strong></div>
           <div className="topbar-right">
             <span className="online-indicator"><i /> Your corner of the world</span>
             {account.gender === 'MAN' && <span className="credit-badge"><Sparkles size={13} /> {account.creditsBalance} credits</span>}
@@ -1301,6 +1624,7 @@ function App() {
               section={moreSection}
               onSectionChange={setMoreSection}
               isMan={account.gender === 'MAN'}
+              creditsBalance={account.creditsBalance}
               favourites={profiles.filter((profile) => favouriteProfileIds.includes(profile.id))}
               skipped={profiles.filter((profile) => skippedProfileIds.includes(profile.id))}
               matches={connections.filter((connection) => connection.direction === 'CONNECTED')}
@@ -1309,13 +1633,17 @@ function App() {
               onMessage={(connection) => { setActiveChat(connection); setView('chat') }}
               onDiscover={() => setView('discover')}
               onLogout={() => void handleLogout()}
-              onCreditsChanged={() => {
-                getCurrentProfile().then(setAccount).catch((cause: unknown) =>
-                  setError(cause instanceof Error ? cause.message : 'Could not refresh account credits.'))
+              onCreditsChanged={async () => {
+                try {
+                  const currentAccount = await getCurrentProfile()
+                  setAccount(currentAccount)
+                  return currentAccount
+                } catch (cause) {
+                  setError(cause instanceof Error ? cause.message : 'Could not refresh account credits.')
+                  throw cause
+                }
               }}
             />
-          ) : view === 'admin' && account.admin ? (
-            <AdminPanel />
           ) : view === 'discover' && account.accountStatus === 'PENDING_VERIFICATION' ? (
             <PendingVerificationView
               account={account}
@@ -1449,6 +1777,7 @@ function App() {
                             </div>
                           </form>
                         )}
+                        <SafetyReportForm profileId={person.id} profileName={person.name} />
                       </article>
                     )
                   })}
@@ -1582,12 +1911,17 @@ function ConnectionsView({
   )
 }
 
-export default App
+export default function App() {
+  return window.location.pathname === '/admin' || window.location.pathname === '/admin/'
+    ? <AdminPortal />
+    : <MemberApp />
+}
 
 function MoreView({
   section,
   onSectionChange,
   isMan,
+  creditsBalance,
   favourites,
   skipped,
   matches,
@@ -1601,6 +1935,7 @@ function MoreView({
   section: MoreSection
   onSectionChange: (section: MoreSection) => void
   isMan: boolean
+  creditsBalance: number
   favourites: Profile[]
   skipped: Profile[]
   matches: Connection[]
@@ -1609,7 +1944,7 @@ function MoreView({
   onMessage: (connection: Connection) => void
   onLogout: () => void
   onDiscover: () => void
-  onCreditsChanged: () => void
+  onCreditsChanged: () => Promise<Account>
 }) {
   const menu = [
     { id: 'matches' as const, label: 'Matches', description: 'People you matched with', count: matches.length, icon: <Users size={18} /> },
@@ -1719,7 +2054,7 @@ function MoreView({
           {section === 'membership' && isMan && (
             <>
               <div className="more-section-heading"><h2>Membership</h2><p>Manage your credits and payment requests.</p></div>
-              <CreditPurchasePanel onCreditsChanged={onCreditsChanged} />
+              <CreditPurchasePanel creditsBalance={creditsBalance} onCreditsChanged={onCreditsChanged} />
             </>
           )}
         </section>

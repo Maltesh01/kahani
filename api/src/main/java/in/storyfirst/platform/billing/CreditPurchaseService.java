@@ -79,8 +79,15 @@ public class CreditPurchaseService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<CreditPurchaseCase> getAllPurchases() {
+        return purchaseRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(purchase -> toCase(purchase, findProfile(purchase.getProfileId())))
+                .toList();
+    }
+
     @Transactional
-    public void review(Long purchaseId, boolean approved) {
+    public CreditPurchaseReviewResult review(Long purchaseId, boolean approved) {
         var purchase = purchaseRepository.findById(purchaseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment request not found."));
         if (!"PENDING".equals(purchase.getStatus())) {
@@ -97,6 +104,12 @@ public class CreditPurchaseService {
                     "ADMIN_APPROVED_PAYMENT:" + purchase.getId()));
         }
         purchase.review(approved);
+        return new CreditPurchaseReviewResult(
+                purchase.getId(),
+                profile.getAccountId(),
+                approved ? purchase.getCredits() : 0,
+                profile.getCreditsBalance(),
+                profile.isSubscriptionActive());
     }
 
     private Profile findProfile(Long profileId) {

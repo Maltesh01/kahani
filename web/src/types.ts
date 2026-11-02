@@ -88,3 +88,62 @@ export type CreditPurchase = {
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   createdAt: string
 }
+
+export type CreditPurchaseReviewResult = {
+  purchaseId: number
+  accountId: string
+  creditsAdded: number
+  creditBalance: number
+  subscriptionActive: boolean
+}
+
+export type AdminUser = {
+  profileId: number
+  name: string
+  accountId: string
+  email: string
+  phoneNumber: string
+  gender: string
+  city: string
+  verificationStatus: string
+  suspended: boolean
+  subscriptionActive: boolean
+  creditsBalance: number
+}
+
+export type AdminAnalytics = {
+  totalUsers: number
+  approvedProfiles: number
+  pendingVerifications: number
+  suspendedUsers: number
+  activeSubscriptions: number
+  pendingPayments: number
+  approvedPayments: number
+  acceptedConnections: number
+  pendingConnections: number
+  totalMessages: number
+  pendingReports: number
+  approvedPaymentRevenueRupees: number
+}
+
+export type SafetyReportCategory =
+  | 'HARASSMENT'
+  | 'INAPPROPRIATE_CONTENT'
+  | 'FAKE_PROFILE'
+  | 'SCAM_OR_SPAM'
+  | 'OTHER'
+
+export type SafetyReport = {
+  id: number
+  reporterProfileId: number
+  reporterName: string
+  reporterAccountId: string
+  reportedProfileId: number
+  reportedName: string
+  reportedAccountId: string
+  category: SafetyReportCategory
+  details: string
+  status: 'PENDING' | 'RESOLVED' | 'DISMISSED'
+  createdAt: string
+  reviewedAt: string | null
+}
