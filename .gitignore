@@ -1,0 +1,13 @@
+target/
+node_modules/
+dist/
+.idea/
+.vscode/
+*.iml
+*.log
+.env
+.env.*
+!.env.example
+*.local
+*.db
+*.sqlite

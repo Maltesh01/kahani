@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="kahani-bg" x1="7" y1="5" x2="58" y2="61" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#87546B"/>
+      <stop offset="1" stop-color="#48263A"/>
+    </linearGradient>
+    <linearGradient id="kahani-page" x1="14" y1="21" x2="51" y2="47" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDF8"/>
+      <stop offset="1" stop-color="#F2E0D5"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="19" fill="url(#kahani-bg)"/>
+  <path d="M13.5 22.2c7.1-2.4 13.2-.8 18.5 4.1v23c-5.3-4.9-11.4-6.5-18.5-4.1v-23Z" fill="url(#kahani-page)"/>
+  <path d="M50.5 22.2c-7.1-2.4-13.2-.8-18.5 4.1v23c5.3-4.9 11.4-6.5 18.5-4.1v-23Z" fill="#E9C9B9"/>
+  <path d="M32 26.3v23M19 29.8c3.2-.4 6.1.1 8.7 1.7M19 36c3.2-.4 6.1.1 8.7 1.7M45 29.8c-3.2-.4-6.1.1-8.7 1.7M45 36c-3.2-.4-6.1.1-8.7 1.7" stroke="#754B60" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="m47.8 11.5 1.4 3.3 3.3 1.4-3.3 1.4-1.4 3.3-1.4-3.3-3.3-1.4 3.3-1.4 1.4-3.3Z" fill="#E6AD78"/>
+  <circle cx="15" cy="15" r="1.5" fill="#E6AD78"/>
+</svg>
