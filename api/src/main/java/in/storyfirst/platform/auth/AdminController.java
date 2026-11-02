@@ -1,5 +1,8 @@
 package in.storyfirst.platform.auth;
 
+import in.storyfirst.platform.billing.CreditPurchaseCase;
+import in.storyfirst.platform.billing.CreditPurchaseDecision;
+import in.storyfirst.platform.billing.CreditPurchaseService;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
@@ -22,16 +25,36 @@ import org.springframework.web.server.ResponseStatusException;
 public class AdminController {
     private final AuthService authService;
     private final VerificationService verificationService;
+    private final CreditPurchaseService creditPurchaseService;
 
-    public AdminController(AuthService authService, VerificationService verificationService) {
+    public AdminController(
+            AuthService authService,
+            VerificationService verificationService,
+            CreditPurchaseService creditPurchaseService) {
         this.authService = authService;
         this.verificationService = verificationService;
+        this.creditPurchaseService = creditPurchaseService;
     }
 
     @GetMapping("/admin/verification-queue")
     public List<VerificationCase> queue(HttpSession session) {
         requireAdmin(session);
         return verificationService.getQueue();
+    }
+
+    @GetMapping("/admin/payment-queue")
+    public List<CreditPurchaseCase> paymentQueue(HttpSession session) {
+        requireAdmin(session);
+        return creditPurchaseService.getPendingPurchases();
+    }
+
+    @PatchMapping("/admin/payments/{purchaseId}")
+    public void reviewPayment(
+            @PathVariable Long purchaseId,
+            @RequestBody CreditPurchaseDecision decision,
+            HttpSession session) {
+        requireAdmin(session);
+        creditPurchaseService.review(purchaseId, decision.approved());
     }
 
     @GetMapping("/admin/profiles/{profileId}/voice")

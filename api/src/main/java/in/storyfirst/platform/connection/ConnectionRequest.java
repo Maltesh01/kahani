@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Column;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,14 +23,18 @@ public class ConnectionRequest {
     private String status;
     private LocalDateTime createdAt;
 
+    @Column(name = "intro_note", length = 500)
+    private String introNote;
+
     protected ConnectionRequest() {
     }
 
-    public ConnectionRequest(Long requesterId, Long recipientId) {
+    public ConnectionRequest(Long requesterId, Long recipientId, String introNote) {
         this.requesterId = requesterId;
         this.recipientId = recipientId;
         this.status = "PENDING";
         this.createdAt = LocalDateTime.now();
+        this.introNote = introNote;
     }
 
     public Long getId() {
@@ -50,6 +55,14 @@ public class ConnectionRequest {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getIntroNote() {
+        return introNote;
+    }
+
+    public void updateIntroNote(String introNote) {
+        this.introNote = introNote;
     }
 
     public void accept() {

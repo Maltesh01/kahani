@@ -1,0 +1,66 @@
+kahani:
+  auth:
+    demo-mode: false
+  web:
+    allowed-origins: ${KAHANI_ALLOWED_ORIGINS:}
+
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        secure: true
+        same-site: lax
+
+spring:
+  datasource:
+    url: ${KAHANI_DATABASE_URL}
+    username: ${KAHANI_DATABASE_USERNAME}
+    password: ${KAHANI_DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${KAHANI_DB_POOL_SIZE:10}
+      minimum-idle: ${KAHANI_DB_MIN_IDLE:2}
+      connection-timeout: 5000
+      validation-timeout: 3000
+      max-lifetime: 1500000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    clean-disabled: true
+    validate-on-migrate: true
+  session:
+    store-type: redis
+    timeout: 30m
+    redis:
+      namespace: kahani:session
+  data:
+    redis:
+      host: ${KAHANI_REDIS_HOST}
+      port: ${KAHANI_REDIS_PORT:6379}
+      username: ${KAHANI_REDIS_USERNAME:default}
+      password: ${KAHANI_REDIS_AUTH_TOKEN}
+      connect-timeout: 2s
+      timeout: 2s
+      ssl:
+        enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true

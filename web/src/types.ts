@@ -3,8 +3,17 @@ export type Profile = {
   name: string
   headline: string
   city: string
+  gender: string | null
+  age: number | null
+  relationshipStatus: string | null
+  whatHereFor: string[]
+  occupation: string | null
+  nativeCity: string | null
+  languages: string[]
   story: string
   interests: string[]
+  interestNotes: string[]
+  valuesNote: string | null
   matchPercent: number
   sharedInterests: string[]
 }
@@ -29,6 +38,7 @@ export type Connection = {
   status: 'PENDING' | 'ACCEPTED'
   direction: 'INCOMING' | 'OUTGOING' | 'CONNECTED'
   createdAt: string
+  introNote: string | null
   profile: Profile
 }
 
@@ -54,4 +64,27 @@ export type VerificationCase = {
   story: string
   instagramHandle: string
   voiceRecordingSubmitted: boolean
+  accountId: string
+  relationshipStatus: string
+  dateOfBirth: string | null
+  whatHereFor: string
+  occupation: string
+  nativeCity: string
+  languages: string
+  interests: string
+  interestNotes: string
+  valuesNote: string
+}
+
+export type CreditPurchase = {
+  id: number
+  profileId: number
+  accountId: string
+  name: string
+  packageCode: string
+  amountRupees: number
+  credits: number
+  paymentReference: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  createdAt: string
 }

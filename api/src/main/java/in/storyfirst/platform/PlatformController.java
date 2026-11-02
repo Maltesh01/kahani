@@ -6,6 +6,7 @@ import in.storyfirst.platform.chat.ChatMessageCard;
 import in.storyfirst.platform.chat.ChatMessageRequest;
 import in.storyfirst.platform.chat.ConversationService;
 import in.storyfirst.platform.connection.ConnectionCard;
+import in.storyfirst.platform.connection.ConnectionRequestMessage;
 import in.storyfirst.platform.connection.InstagramShareCard;
 import in.storyfirst.platform.connection.ConnectionService;
 import in.storyfirst.platform.profile.ProfileCard;
@@ -57,8 +58,11 @@ public class PlatformController {
     }
 
     @PostMapping("/connections/{profileId}")
-    public ConnectionCard requestConnection(@PathVariable Long profileId, HttpSession session) {
-        return connectionService.requestConnection(authService.currentProfileId(session), profileId);
+    public ConnectionCard requestConnection(
+            @PathVariable Long profileId,
+            @RequestBody ConnectionRequestMessage message,
+            HttpSession session) {
+        return connectionService.requestConnection(authService.currentProfileId(session), profileId, message.note());
     }
 
     @PatchMapping("/connections/{requestId}/accept")

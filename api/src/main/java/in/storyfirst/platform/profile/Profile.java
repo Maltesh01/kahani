@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "profiles")
@@ -18,10 +19,10 @@ public class Profile {
     private String headline;
     private String city;
 
-    @Column(length = 2000)
+    @Column(length = 20000, columnDefinition = "TEXT")
     private String story;
 
-    @Column(length = 1000)
+    @Column(length = 2000)
     private String interests;
 
     @Column(unique = true)
@@ -35,6 +36,31 @@ public class Profile {
 
     private String passwordHash;
     private String gender;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "relationship_status", length = 40)
+    private String relationshipStatus;
+
+    @Column(name = "what_here_for", length = 500)
+    private String whatHereFor;
+
+    @Column(length = 120)
+    private String occupation;
+
+    @Column(name = "native_city", length = 100)
+    private String nativeCity;
+
+    @Column(length = 500)
+    private String languages;
+
+    @Column(name = "interest_notes", columnDefinition = "TEXT")
+    private String interestNotes;
+
+    @Column(name = "values_note", columnDefinition = "TEXT")
+    private String valuesNote;
+
     private String instagramHandle;
     private String verificationStatus;
     private boolean instagramVerified;
@@ -54,6 +80,35 @@ public class Profile {
             String story,
             String interests,
             String gender,
+            LocalDate dateOfBirth,
+            String relationshipStatus,
+            String phoneNumber,
+            String instagramHandle,
+            String verificationStatus,
+            boolean instagramVerified,
+            boolean subscriptionActive,
+            int creditsBalance,
+            boolean admin) {
+        this(name, headline, city, story, interests, gender, dateOfBirth, relationshipStatus,
+                null, null, null, null, null, null, phoneNumber, instagramHandle,
+                verificationStatus, instagramVerified, subscriptionActive, creditsBalance, admin);
+    }
+
+    public Profile(
+            String name,
+            String headline,
+            String city,
+            String story,
+            String interests,
+            String gender,
+            LocalDate dateOfBirth,
+            String relationshipStatus,
+            String whatHereFor,
+            String occupation,
+            String nativeCity,
+            String languages,
+            String interestNotes,
+            String valuesNote,
             String phoneNumber,
             String instagramHandle,
             String verificationStatus,
@@ -67,6 +122,14 @@ public class Profile {
         this.story = story;
         this.interests = interests;
         this.gender = gender;
+        this.dateOfBirth = dateOfBirth;
+        this.relationshipStatus = relationshipStatus;
+        this.whatHereFor = whatHereFor;
+        this.occupation = occupation;
+        this.nativeCity = nativeCity;
+        this.languages = languages;
+        this.interestNotes = interestNotes;
+        this.valuesNote = valuesNote;
         this.phoneNumber = phoneNumber;
         this.instagramHandle = instagramHandle;
         this.verificationStatus = verificationStatus;
@@ -126,6 +189,38 @@ public class Profile {
         return gender;
     }
 
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public String getRelationshipStatus() {
+        return relationshipStatus;
+    }
+
+    public String getWhatHereFor() {
+        return whatHereFor;
+    }
+
+    public String getOccupation() {
+        return occupation;
+    }
+
+    public String getNativeCity() {
+        return nativeCity;
+    }
+
+    public String getLanguages() {
+        return languages;
+    }
+
+    public String getInterestNotes() {
+        return interestNotes;
+    }
+
+    public String getValuesNote() {
+        return valuesNote;
+    }
+
     public String getInstagramHandle() {
         return instagramHandle;
     }
@@ -144,6 +239,14 @@ public class Profile {
 
     public int getCreditsBalance() {
         return creditsBalance;
+    }
+
+    public void addCredits(int credits) {
+        if (credits <= 0) {
+            throw new IllegalArgumentException("Credits must be positive");
+        }
+        creditsBalance = Math.addExact(creditsBalance, credits);
+        subscriptionActive = true;
     }
 
     public boolean isAdmin() {

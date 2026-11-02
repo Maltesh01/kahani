@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,6 +17,8 @@ public class ChatMessage {
 
     private Long connectionRequestId;
     private Long senderId;
+
+    @Column(length = 2000)
     private String body;
     private LocalDateTime createdAt;
 

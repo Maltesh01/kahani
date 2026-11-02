@@ -1,14 +1,17 @@
 package in.storyfirst.platform.auth;
 
+import java.util.List;
+import java.util.Map;
+
 public record PhoneCodeRequest(
-        String phoneNumber,
-        String email,
+        String signupToken,
         String password,
-        String name,
-        String gender,
-        String headline,
-        String city,
+        String occupation,
+        String nativeCity,
+        List<String> languages,
+        List<String> interests,
+        Map<String, String> interestNotes,
+        String valuesNote,
         String story,
-        String interests,
-        String instagramHandle) {
+        String instagramUrl) {
 }

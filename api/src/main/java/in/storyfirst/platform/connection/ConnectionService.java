@@ -39,7 +39,7 @@ public class ConnectionService {
     }
 
     @Transactional
-    public ConnectionCard requestConnection(Long currentProfileId, Long profileId) {
+    public ConnectionCard requestConnection(Long currentProfileId, Long profileId, String introNote) {
         if (profileId.equals(currentProfileId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot connect with your own profile");
         }
@@ -50,9 +50,18 @@ public class ConnectionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
         requireEligible(current);
         requireEligible(target);
+        var note = introNote == null ? "" : introNote.trim();
+        if (note.length() < 10 || note.length() > 500) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Your hello note must be between 10 and 500 characters");
+        }
 
         var outgoing = requestRepository.findByRequesterIdAndRecipientId(currentProfileId, profileId);
         if (outgoing.isPresent()) {
+            if ("PENDING".equals(outgoing.get().getStatus())) {
+                outgoing.get().updateIntroNote(note);
+            }
             return toCard(outgoing.get(), currentProfileId);
         }
 
@@ -64,17 +73,18 @@ public class ConnectionService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This person has already sent you a request");
         }
 
-        if ("MAN".equals(current.getGender())) {
+        var requiresCredit = "MAN".equals(current.getGender()) && "WOMAN".equals(target.getGender());
+        if (requiresCredit) {
             if (!current.isSubscriptionActive()) {
-                throw new ResponseStatusException(HttpStatus.PAYMENT_REQUIRED, "An active subscription is required to send connection requests");
+                throw new ResponseStatusException(HttpStatus.PAYMENT_REQUIRED, "A credit purchase is required before a man can connect with a woman");
             }
             if (current.getCreditsBalance() < 1) {
-                throw new ResponseStatusException(HttpStatus.PAYMENT_REQUIRED, "You need 1 credit to send a connection request");
+                throw new ResponseStatusException(HttpStatus.PAYMENT_REQUIRED, "You need 1 credit to connect with this woman");
             }
         }
 
-        var request = requestRepository.save(new ConnectionRequest(currentProfileId, profileId));
-        if ("MAN".equals(current.getGender())) {
+        var request = requestRepository.save(new ConnectionRequest(currentProfileId, profileId, note));
+        if (requiresCredit) {
             current.spendCredit();
             creditTransactionRepository.save(new CreditTransaction(
                     currentProfileId,
@@ -123,18 +133,16 @@ public class ConnectionService {
         var direction = "ACCEPTED".equals(request.getStatus())
                 ? "CONNECTED"
                 : request.getRequesterId().equals(currentProfileId) ? "OUTGOING" : "INCOMING";
-        return new ConnectionCard(request.getId(), request.getStatus(), direction, request.getCreatedAt(), toProfileCard(profile));
+        return new ConnectionCard(
+                request.getId(),
+                request.getStatus(),
+                direction,
+                request.getCreatedAt(),
+                request.getIntroNote(),
+                toProfileCard(profile));
     }
 
     private ProfileCard toProfileCard(Profile profile) {
-        return new ProfileCard(
-                profile.getId(),
-                profile.getName(),
-                profile.getHeadline(),
-                profile.getCity(),
-                profile.getStory(),
-                List.of(profile.getInterests().split(",")),
-                0,
-                List.of());
+        return ProfileCard.from(profile, 0, List.of());
     }
 }

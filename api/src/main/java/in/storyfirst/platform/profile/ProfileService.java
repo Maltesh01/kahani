@@ -59,18 +59,6 @@ public class ProfileService {
     }
 
     private ProfileCard toCard(Profile profile, int matchPercent, List<String> shared) {
-        var interests = Arrays.stream(profile.getInterests().split(","))
-                .map(String::trim)
-                .filter(value -> !value.isBlank())
-                .toList();
-        return new ProfileCard(
-                profile.getId(),
-                profile.getName(),
-                profile.getHeadline(),
-                profile.getCity(),
-                profile.getStory(),
-                interests,
-                matchPercent,
-                shared);
+        return ProfileCard.from(profile, matchPercent, shared);
     }
 }

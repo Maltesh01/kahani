@@ -10,6 +10,8 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
 
     java.util.Optional<Profile> findByEmailIgnoreCase(String email);
 
+    java.util.Optional<Profile> findByAccountIdIgnoreCase(String accountId);
+
     boolean existsByAccountId(String accountId);
 
     java.util.List<Profile> findByVerificationStatusOrderByIdAsc(String verificationStatus);

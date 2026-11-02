@@ -8,5 +8,15 @@ public record VerificationCase(
         String city,
         String story,
         String instagramHandle,
-        boolean voiceRecordingSubmitted) {
+        boolean voiceRecordingSubmitted,
+        String accountId,
+        String relationshipStatus,
+        String dateOfBirth,
+        String whatHereFor,
+        String occupation,
+        String nativeCity,
+        String languages,
+        String interests,
+        String interestNotes,
+        String valuesNote) {
 }

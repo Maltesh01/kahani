@@ -50,10 +50,10 @@ public class DataSeeder {
                     "Admin account for reviewing demo verification submissions.", "",
                     "MAN", "+15550000009", "kahani.admin.demo", false, 0, true, passwordEncoder);
 
-            requestRepository.save(new ConnectionRequest(maya.getId(), demo.getId()));
-            requestRepository.save(new ConnectionRequest(arjun.getId(), demo.getId()));
-            requestRepository.save(new ConnectionRequest(demo.getId(), priya.getId()));
-            var accepted = new ConnectionRequest(noah.getId(), demo.getId());
+            requestRepository.save(new ConnectionRequest(maya.getId(), demo.getId(), "Your story about design and running caught my eye."));
+            requestRepository.save(new ConnectionRequest(arjun.getId(), demo.getId(), "I would love to hear more about your climate work."));
+            requestRepository.save(new ConnectionRequest(demo.getId(), priya.getId(), "Your story made me smile. How did you get into cooking?"));
+            var accepted = new ConnectionRequest(noah.getId(), demo.getId(), "I loved your photography story. What do you enjoy capturing most?");
             accepted.accept();
             requestRepository.save(accepted);
         };
@@ -80,6 +80,8 @@ public class DataSeeder {
                 story,
                 interests,
                 gender,
+                null,
+                null,
                 phoneNumber,
                 instagramHandle,
                 "APPROVED",

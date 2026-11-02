@@ -1,0 +1,15 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+  datasource:
+    url: ${KAHANI_TEST_DATABASE_URL}
+    username: ${KAHANI_TEST_DATABASE_USERNAME}
+    password: ${KAHANI_TEST_DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true

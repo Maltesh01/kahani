@@ -1,0 +1,30 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+  datasource:
+    url: jdbc:h2:mem:kahani
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  h2:
+    console:
+      enabled: false
+  flyway:
+    enabled: false
+server:
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        secure: ${KAHANI_SESSION_COOKIE_SECURE:false}
+        same-site: lax
+management:
+  health:
+    redis:
+      enabled: false

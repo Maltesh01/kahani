@@ -8,5 +8,6 @@ public record ConnectionCard(
         String status,
         String direction,
         LocalDateTime createdAt,
+        String introNote,
         ProfileCard profile) {
 }

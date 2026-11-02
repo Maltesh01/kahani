@@ -35,7 +35,17 @@ public class VerificationService {
                         profile.getCity(),
                         profile.getStory(),
                         profile.getInstagramHandle(),
-                        profile.isVoiceRecordingSubmitted()))
+                        profile.isVoiceRecordingSubmitted(),
+                        profile.getAccountId(),
+                        profile.getRelationshipStatus(),
+                        profile.getDateOfBirth() == null ? null : profile.getDateOfBirth().toString(),
+                        profile.getWhatHereFor(),
+                        profile.getOccupation(),
+                        profile.getNativeCity(),
+                        profile.getLanguages(),
+                        profile.getInterests(),
+                        profile.getInterestNotes(),
+                        profile.getValuesNote()))
                 .toList();
     }
 
@@ -79,6 +89,11 @@ public class VerificationService {
         var profile = findProfile(profileId);
         if (!"PENDING".equals(profile.getVerificationStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This verification request is no longer pending");
+        }
+        if (approved && "WOMAN".equals(profile.getGender()) && !profile.isVoiceRecordingSubmitted()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "A voice recording is required before approving a woman's account. Live face verification is not available yet.");
         }
         profile.reviewVerification(approved);
         recordingRepository.deleteByProfileId(profileId);

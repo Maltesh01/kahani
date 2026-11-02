@@ -30,6 +30,31 @@ public class AuthController {
         return authService.sendCode(request);
     }
 
+    @PostMapping("/email/send-code")
+    public DemoCodeResponse sendEmailCode(@RequestBody EmailCodeRequest request) {
+        return authService.sendEmailCode(request);
+    }
+
+    @PostMapping("/account-id/recovery/send-code")
+    public DemoCodeResponse sendAccountIdRecoveryCode(@RequestBody EmailCodeRequest request) {
+        return authService.sendAccountIdRecoveryCode(request);
+    }
+
+    @PostMapping("/account-id/recovery")
+    public AccountIdRecoveryResponse recoverAccountId(@RequestBody VerifyEmailRequest request) {
+        return authService.recoverAccountId(request);
+    }
+
+    @PostMapping("/email/verify")
+    public EmailVerificationResponse verifyEmailCode(@RequestBody VerifyEmailRequest request) {
+        return authService.verifyEmailCode(request);
+    }
+
+    @PostMapping("/signup/start")
+    public SignupStartResponse startSignup(@RequestBody SignupStartRequest request) {
+        return authService.startSignup(request);
+    }
+
     @PostMapping("/verify")
     public AccountSummary verify(
             @RequestBody VerifyPhoneRequest request,
